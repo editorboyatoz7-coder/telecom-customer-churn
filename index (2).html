@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telecom Customer Churn Prediction</title>
+<meta name="description" content="An end-to-end machine learning project predicting telecom customer churn — notebook, trained model, and live prediction app.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0B0F14;
+    --panel:#141A22;
+    --panel-border:#222B36;
+    --text:#E8ECEF;
+    --text-muted:#8FA3B8;
+    --blue:#4C7BB0;
+    --blue-soft:#2C4A73;
+    --orange:#FF6B4A;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--body);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(11,15,20,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--panel-border);
+  }
+  nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 0;
+  }
+  .brand{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:1.05rem;
+    letter-spacing:-0.01em;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--orange);
+    box-shadow:0 0 0 4px rgba(255,107,74,0.15);
+  }
+  .nav-links{
+    display:flex;
+    gap:28px;
+    font-size:0.92rem;
+    color:var(--text-muted);
+  }
+  .nav-links a{
+    text-decoration:none;
+    transition:color .15s ease;
+  }
+  .nav-links a:hover, .nav-links a:focus-visible{color:var(--text);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:96px 0 72px;
+    border-bottom:1px solid var(--panel-border);
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--orange);
+    margin:0 0 18px;
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(2.4rem, 5vw, 3.6rem);
+    line-height:1.08;
+    letter-spacing:-0.02em;
+    margin:0 0 22px;
+    max-width:760px;
+  }
+  h1 em{
+    font-style:normal;
+    color:var(--orange);
+  }
+  .hero p.lede{
+    font-size:1.1rem;
+    color:var(--text-muted);
+    max-width:560px;
+    margin:0 0 36px;
+  }
+
+  /* Signal bar signature animation */
+  .signal{
+    display:flex;
+    align-items:flex-end;
+    gap:5px;
+    height:54px;
+    margin:0 0 40px;
+  }
+  .signal span{
+    width:7px;
+    border-radius:3px 3px 0 0;
+    background:var(--blue);
+    animation:bar 2.6s ease-in-out infinite;
+    transform-origin:bottom;
+  }
+  .signal span.drop{ background:var(--orange); }
+  .signal span:nth-child(1){height:30%; animation-delay:0s;}
+  .signal span:nth-child(2){height:55%; animation-delay:.15s;}
+  .signal span:nth-child(3){height:80%; animation-delay:.3s;}
+  .signal span:nth-child(4){height:45%; animation-delay:.45s;}
+  .signal span:nth-child(5){height:95%; animation-delay:.6s;}
+  .signal span:nth-child(6){height:35%; animation-delay:.75s;}
+  .signal span:nth-child(7){height:70%; animation-delay:.9s;}
+  .signal span:nth-child(8){height:25%; animation-delay:1.05s;}
+  .signal span:nth-child(9){height:60%; animation-delay:1.2s;}
+  .signal span:nth-child(10){height:40%; animation-delay:1.35s;}
+
+  @keyframes bar{
+    0%, 100%{ transform:scaleY(1); opacity:1; }
+    45%{ transform:scaleY(0.15); opacity:0.35; }
+    55%{ transform:scaleY(0.15); opacity:0.35; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .signal span{animation:none;}
+  }
+
+  .cta-row{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 22px;
+    border-radius:8px;
+    font-size:0.94rem;
+    font-weight:500;
+    text-decoration:none;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn-primary{
+    background:var(--orange);
+    color:#0B0F14;
+  }
+  .btn-primary:hover{background:#ff8064; transform:translateY(-1px);}
+  .btn-secondary{
+    background:transparent;
+    border:1px solid var(--panel-border);
+    color:var(--text);
+  }
+  .btn-secondary:hover{border-color:var(--blue); transform:translateY(-1px);}
+  .btn:focus-visible{outline:2px solid var(--orange); outline-offset:2px;}
+
+  /* ---------- STATS ---------- */
+  .stats{
+    padding:48px 0;
+    border-bottom:1px solid var(--panel-border);
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:24px;
+  }
+  .stat-num{
+    font-family:var(--mono);
+    font-size:1.9rem;
+    color:var(--text);
+    font-weight:500;
+  }
+  .stat-label{
+    font-size:0.82rem;
+    color:var(--text-muted);
+    margin-top:6px;
+  }
+
+  /* ---------- CARDS ---------- */
+  .section{
+    padding:80px 0;
+  }
+  .section-head{
+    margin-bottom:40px;
+    max-width:600px;
+  }
+  .section-head .eyebrow{margin-bottom:10px;}
+  h2{
+    font-family:var(--display);
+    font-size:1.8rem;
+    font-weight:600;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .section-head p{
+    color:var(--text-muted);
+    margin:0;
+  }
+
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:20px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:28px;
+    text-decoration:none;
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .card:hover, .card:focus-visible{
+    border-color:var(--blue);
+    transform:translateY(-3px);
+  }
+  .card-icon{
+    width:38px;height:38px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(76,123,176,0.15);
+    color:var(--blue);
+  }
+  .card-icon.orange{
+    background:rgba(255,107,74,0.15);
+    color:var(--orange);
+  }
+  .card h3{
+    font-family:var(--display);
+    font-size:1.1rem;
+    font-weight:600;
+    margin:0;
+  }
+  .card p{
+    font-size:0.92rem;
+    color:var(--text-muted);
+    margin:0;
+    flex-grow:1;
+  }
+  .card-link{
+    font-family:var(--mono);
+    font-size:0.8rem;
+    color:var(--blue);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  /* ---------- METHODOLOGY STRIP ---------- */
+  .method{
+    border-top:1px solid var(--panel-border);
+    border-bottom:1px solid var(--panel-border);
+    padding:56px 0;
+  }
+  .method-row{
+    display:flex;
+    gap:0;
+    overflow-x:auto;
+  }
+  .method-step{
+    flex:1;
+    min-width:160px;
+    padding:0 24px;
+    border-left:1px solid var(--panel-border);
+  }
+  .method-step:first-child{border-left:none; padding-left:0;}
+  .method-step .tag{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    color:var(--text-muted);
+    margin-bottom:8px;
+    display:block;
+  }
+  .method-step h4{
+    font-family:var(--display);
+    font-size:0.98rem;
+    font-weight:600;
+    margin:0 0 8px;
+  }
+  .method-step p{
+    font-size:0.85rem;
+    color:var(--text-muted);
+    margin:0;
+  }
+
+  /* ---------- DRIVERS ---------- */
+  .drivers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .driver{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:16px 18px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+  }
+  .driver .bar{
+    width:4px;
+    height:32px;
+    border-radius:2px;
+    background:var(--orange);
+    flex-shrink:0;
+  }
+  .driver span{
+    font-size:0.9rem;
+    color:var(--text);
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding:48px 0 60px;
+  }
+  .chips{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .chip{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    color:var(--text-muted);
+    border:1px solid var(--panel-border);
+    border-radius:6px;
+    padding:6px 12px;
+  }
+  .foot-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+    border-top:1px solid var(--panel-border);
+    padding-top:24px;
+    font-size:0.85rem;
+    color:var(--text-muted);
+  }
+  .foot-row a{
+    color:var(--text-muted);
+    text-decoration:none;
+  }
+  .foot-row a:hover{color:var(--text);}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:760px){
+    .nav-links{display:none;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .card-grid{grid-template-columns:1fr;}
+    .drivers{grid-template-columns:1fr;}
+    .method-row{flex-direction:column;}
+    .method-step{border-left:none; border-top:1px solid var(--panel-border); padding:20px 0 0; margin-top:20px;}
+    .method-step:first-child{border-top:none; margin-top:0; padding-top:0;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <div class="brand"><span class="brand-dot" aria-hidden="true"></span>Telecom Churn Prediction</div>
+      <div class="nav-links">
+        <a href="#project">Project</a>
+        <a href="#resources">Resources</a>
+        <a href="#methodology">Methodology</a>
+        <a href="REPLACE_WITH_GITHUB_REPO_URL">GitHub</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap" id="project">
+    <p class="eyebrow">Internship Project &middot; Machine Learning</p>
+    <h1>Predicting which customers <em>drop the signal</em> before they do.</h1>
+    <div class="signal" aria-hidden="true">
+      <span></span><span></span><span class="drop"></span><span></span><span></span>
+      <span class="drop"></span><span></span><span></span><span class="drop"></span><span></span>
+    </div>
+    <p class="lede">An end-to-end machine learning pipeline that analyzes telecom customer data — contracts, billing, services, tenure — to flag who's likely to churn, before they leave.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="REPLACE_WITH_STREAMLIT_APP_URL">Try the live predictor</a>
+      <a class="btn btn-secondary" href="REPLACE_WITH_GITHUB_REPO_URL">View on GitHub</a>
+    </div>
+  </section>
+
+  <section class="stats wrap">
+    <div>
+      <div class="stat-num">7,043</div>
+      <div class="stat-label">customer records analyzed</div>
+    </div>
+    <div>
+      <div class="stat-num">4</div>
+      <div class="stat-label">models trained &amp; compared</div>
+    </div>
+    <div>
+      <div class="stat-num">0.69</div>
+      <div class="stat-label">best model ROC&ndash;AUC</div>
+    </div>
+    <div>
+      <div class="stat-num">27.8%</div>
+      <div class="stat-label">baseline churn rate in data</div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="resources">
+    <div class="section-head">
+      <p class="eyebrow">Resources</p>
+      <h2>Three ways to look at this project</h2>
+      <p>The same pipeline, three views: the reasoning, the result, and the working tool.</p>
+    </div>
+    <div class="card-grid">
+      <a class="card" href="REPLACE_WITH_NOTEBOOK_URL">
+        <div class="card-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h3>Analysis notebook</h3>
+        <p>Full walkthrough — cleaning, EDA, feature engineering, model comparison, and feature importance, with every chart.</p>
+        <span class="card-link">View notebook &rarr;</span>
+      </a>
+      <a class="card" href="REPLACE_WITH_STREAMLIT_APP_URL">
+        <div class="card-icon orange" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h3>Live predictor</h3>
+        <p>Enter a customer's contract, billing, and service details and get a real-time churn risk score from the trained model.</p>
+        <span class="card-link">Open app &rarr;</span>
+      </a>
+      <a class="card" href="REPLACE_WITH_PDR_PDF_URL">
+        <div class="card-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </div>
+        <h3>Project detail report</h3>
+        <p>The full written report — objectives, methodology, architecture, timeline, and conclusions — as submitted for the internship.</p>
+        <span class="card-link">Read report &rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="method wrap" id="methodology">
+    <div class="section-head">
+      <p class="eyebrow">Pipeline</p>
+      <h2>How the prediction gets made</h2>
+    </div>
+    <div class="method-row">
+      <div class="method-step">
+        <span class="tag">input</span>
+        <h4>Clean &amp; encode</h4>
+        <p>Fix missing billing values, encode categorical fields, scale numeric ones.</p>
+      </div>
+      <div class="method-step">
+        <span class="tag">balance</span>
+        <h4>Correct for imbalance</h4>
+        <p>SMOTE oversampling so the rarer churn class isn't ignored by the model.</p>
+      </div>
+      <div class="method-step">
+        <span class="tag">train</span>
+        <h4>Compare 4 models</h4>
+        <p>Logistic Regression, Decision Tree, Random Forest, Gradient Boosting.</p>
+      </div>
+      <div class="method-step">
+        <span class="tag">select</span>
+        <h4>Score by ROC&ndash;AUC</h4>
+        <p>Not accuracy alone &mdash; precision, recall, and F1 matter more on imbalanced data.</p>
+      </div>
+      <div class="method-step">
+        <span class="tag">serve</span>
+        <h4>Predict live</h4>
+        <p>Best model is saved and served through the Streamlit app for real-time scoring.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="section-head">
+      <p class="eyebrow">Findings</p>
+      <h2>What actually drives churn here</h2>
+    </div>
+    <div class="drivers">
+      <div class="driver"><span class="bar" aria-hidden="true"></span><span>Month-to-month contracts churn far more than annual ones</span></div>
+      <div class="driver"><span class="bar" aria-hidden="true"></span><span>New customers (low tenure) are the highest-risk group</span></div>
+      <div class="driver"><span class="bar" aria-hidden="true"></span><span>Fiber customers without tech support churn more</span></div>
+      <div class="driver"><span class="bar" aria-hidden="true"></span><span>Electronic check payers churn more than auto-pay users</span></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="chips">
+    <span class="chip">Python</span>
+    <span class="chip">Pandas</span>
+    <span class="chip">Scikit-learn</span>
+    <span class="chip">Matplotlib</span>
+    <span class="chip">Streamlit</span>
+    <span class="chip">Joblib</span>
+  </div>
+  <div class="foot-row">
+    <span>Telecom Customer Churn Prediction &middot; Internship Project</span>
+    <a href="REPLACE_WITH_GITHUB_REPO_URL">github.com/your-username/telecom-churn-prediction</a>
+  </div>
+</footer>
+
+</body>
+</html>
